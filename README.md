@@ -2,6 +2,8 @@
 
 开发板只负责拿摄像头画面。广州的一台云服务器只转发这一路画面。看画面和找车牌在 Linux 或 Windows 的 Qt 上位机上做，两边用的是同一份 `client/` 源码。开发板和上位机都只连接这台服务器，互相不直连。
 
+本仓库自己写的程序只有上位机。开发板上属于本仓库的文件只有 `board/stream.sh`：它检查设备和参数，然后把进程交给板上已经装好的 `ffmpeg`。连手机热点用的 `insmod`、`wpa_supplicant`、`udhcpc` 是串口里逐条执行的命令，步骤在 [docs/开发板连接手机热点.md](docs/开发板连接手机热点.md)，没有收成第二个脚本。云服务器上只有从发布页下载的 `mediamtx` 和仓库里的 `server/mediamtx.yml`，没有本仓库的源码。
+
 这个仓库里的车牌程序只画框、裁出车牌小图，不识别车牌上的字。定位算法在 `client/src/PlateDetector.cpp`，阈值在该文件顶部的 `cfg`。
 
 ## 各台机器干什么
@@ -19,10 +21,10 @@ USB 摄像头 /dev/video1          MediaMTX 监听 :8554
 
 | 机器 | 要跑的程序 | 不要做的事 |
 | --- | --- | --- |
-| 开发板 | 拷过去的 `board/stream.sh`，调用板上已有的 `ffmpeg` | 不编译 Qt，不跑 OpenCV，不把整个仓库交叉编译上去 |
-| 云服务器（轻量应用服务器，广州，Ubuntu） | `mediamtx` 和 `server/mediamtx.yml` | 不解码，不找车牌，不保存录像 |
-| Linux 电脑 | `client/build/lpr_client` | 开发板的脚本不用在这里执行 |
-| Windows 电脑 | `client\build\Release\lpr_client.exe` | 不把虚拟机里的 `client/build` 拷过来编译 |
+| 开发板 | 只有拷过去的 `board/stream.sh`，再调用板上已有的 `ffmpeg` | 不编译 Qt，不跑 OpenCV，不把整个仓库交叉编译上去 |
+| 云服务器（轻量应用服务器，广州，Ubuntu） | 只有 `mediamtx` 和 `server/mediamtx.yml` | 不解码，不找车牌，不保存录像，不放本仓库源码 |
+| Linux 电脑 | 由 `client/` 编出的 `client/build/lpr_client` | 开发板的脚本不用在这里执行 |
+| Windows 电脑 | 由同一份 `client/` 编出的 `client\build\Release\lpr_client.exe` | 不把虚拟机里的 `client/build` 拷过来编译 |
 
 开发板通过手机热点上网，再把流推到公网地址。热点的连接步骤见 [docs/开发板连接手机热点.md](docs/开发板连接手机热点.md)。`board/stream.sh` 读取 YUYV，再编成 MJPEG 推出去。这块摄像头的 MJPEG 模式没有帧，不能原样转发。
 
@@ -32,9 +34,9 @@ USB 摄像头 /dev/video1          MediaMTX 监听 :8554
 
 | 路径 | 内容 |
 | --- | --- |
-| `board/stream.sh` | 板端推流脚本。默认 `/dev/video1`，读取 YUYV 640×480、10 fps，编成 MJPEG 后走 RTSP/TCP |
-| `server/mediamtx.yml` | MediaMTX 的项目配置。路径名是 `live`，端口 8554，只允许 TCP |
-| `client/` | Linux 和 Windows 共用的 Qt 上位机。Linux 用 Qt 5，Windows 用 Qt 6 |
+| `board/stream.sh` | 开发板上唯一属于本仓库的文件。检查设备和参数后交给 `ffmpeg`。默认 `/dev/video1`，读取 YUYV 640×480、10 fps，编成 MJPEG 后走 RTSP/TCP |
+| `server/mediamtx.yml` | 云服务器上唯一属于本仓库的文件。路径名是 `live`，端口 8554，只允许 TCP。`mediamtx` 程序另行下载 |
+| `client/` | 本仓库的源码所在。Linux 和 Windows 共用，Linux 用 Qt 5，Windows 用 Qt 6 |
 | `docs/架构设计.md` | 画面从摄像头到窗口的每一步：采什么、在哪编码、用什么协议、MediaMTX 拿到后做什么 |
 | `docs/联调说明.md` | 公网服务器地址、带宽和流量、延迟参数、UDP 对照 |
 | `docs/开发板连接手机热点.md` | 每次上电后加载 8188EU、连上手机热点并拿到地址 |
