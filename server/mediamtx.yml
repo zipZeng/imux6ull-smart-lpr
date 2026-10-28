@@ -1,10 +1,12 @@
 # MediaMTX 最简配置：只提供一路 RTSP，传输只用 TCP。
-# 启动: mediamtx mediamtx.yml
-# 开发板推流、Ubuntu 拉流都用: rtsp://<本机IP>:8554/live
+# 启动: ./mediamtx mediamtx.yml
+# 开发板推流、Linux 或 Windows 上位机拉流都用:
+#   rtsp://134.175.47.224:8554/live
+# 配置里不写 IP。换服务器时只改推流命令和上位机地址栏。
 #
-# 本机联调把地址里的 IP 写成 127.0.0.1。
-# 公网或局域网把 IP 换成服务器地址，并放行 TCP 8554。
-# 试 UDP 时把下一行改成 rtspTransports: [udp, tcp]，板上再设 RTSP_TRANSPORT=udp。
+# 本机用彩条自测时，把地址写成 127.0.0.1，并给 ffmpeg 加上 -re。
+# 试 UDP 时把 rtspTransports 改成 [udp, tcp]，板上再设 RTSP_TRANSPORT=udp。
+# 不要用仓库根目录那份官方长配置启动。
 
 logLevel: info
 

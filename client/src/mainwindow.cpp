@@ -528,9 +528,10 @@ cv::Mat MainWindow::qImageToBgr(const QImage& image) {
 
 QString MainWindow::sampleDirectory() {
     const QStringList candidates = {
-        QStringLiteral("License Plate Detector/images"),
-        QStringLiteral("../License Plate Detector/images"),
-        QStringLiteral("../../License Plate Detector/images"),
+        QStringLiteral("samples"),
+        QStringLiteral("../samples"),
+        QStringLiteral("../../samples"),
+        QStringLiteral("../../../samples"),
     };
     for (const QString& candidate : candidates) {
         if (QDir(candidate).exists()) {

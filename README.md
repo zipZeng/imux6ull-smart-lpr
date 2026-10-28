@@ -2,7 +2,7 @@
 
 开发板只负责拿摄像头画面。广州的一台云服务器只转发这一路画面。看画面和找车牌在 Linux 或 Windows 的 Qt 上位机上做，两边用的是同一份 `client/` 源码。开发板和上位机都只连接这台服务器，互相不直连。
 
-这个仓库里的车牌程序只画框、裁出车牌小图，不识别车牌上的字。定位算法来自旁边的 Windows 工程 `License Plate Detector`，原样拷进了 `client/src/`。
+这个仓库里的车牌程序只画框、裁出车牌小图，不识别车牌上的字。定位算法在 `client/src/PlateDetector.cpp`，阈值在该文件顶部的 `cfg`。
 
 ## 各台机器干什么
 
@@ -38,9 +38,11 @@ USB 摄像头 /dev/video1          MediaMTX 监听 :8554
 | `docs/架构设计.md` | 画面从摄像头到窗口的每一步：采什么、在哪编码、用什么协议、MediaMTX 拿到后做什么 |
 | `docs/联调说明.md` | 公网服务器地址、带宽和流量、延迟参数、UDP 对照 |
 | `docs/开发板连接手机热点.md` | 每次上电后加载 8188EU、连上手机热点并拿到地址 |
-| `License Plate Detector/` | 原来的 Windows 选图定位程序和样图，不部署 |
+| `docs/定位算法.md` | 车牌框怎么找出来：四条路径、每个函数、阈值和样图结果 |
+| `samples/` | 选图和改阈值后用来回归的图片。不部署到开发板或云服务器 |
+| 仓库根目录的 `mediamtx.yml` | 解压 MediaMTX 时带上的官方默认配置，大约 760 行。不要用它启动 |
 
-解压 MediaMTX 时，压缩包会带一份很长的 `mediamtx.yml`。那是官方默认配置。项目用的是 `server/mediamtx.yml`。云服务器上这两个文件放在同一目录，启动命令是 `./mediamtx mediamtx.yml`。
+项目用的是 `server/mediamtx.yml`。可执行文件 `mediamtx` 从发布页下载，不放进 Git。云服务器上把程序和这份短配置放在同一目录，启动命令是 `./mediamtx mediamtx.yml`。
 
 ## 云服务器
 
@@ -72,7 +74,7 @@ cmake --build client/build
 
 `lpr_client` 依赖这台机器上的 Qt 5 和 OpenCV，不能拷到开发板上跑。
 
-Windows 只拷 `client/CMakeLists.txt` 和 `client/src/`。不要拷虚拟机里的 `client/build`，那是 Linux 的编译缓存；如果已经拷过去，先删掉再配置。Qt 和 OpenCV 用 `client/CMakeLists.txt` 里的 `QT_ROOT`、`OpenCV_DIR`，当前是 `F:\software\Qt\6\6.9.3\msvc2022_64` 和 `D:\Project\QT\Opencv_operatorVideo\third_party\opencv\build`。换机器时改这两个路径。
+Windows 编译只需要 `client/CMakeLists.txt` 和 `client/src/`。不要拷虚拟机里的 `client/build`，那是 Linux 的编译缓存；如果已经拷过去，先删掉再配置。Qt 和 OpenCV 用 `client/CMakeLists.txt` 里的 `QT_ROOT`、`OpenCV_DIR`，当前是 `F:\software\Qt\6\6.9.3\msvc2022_64` 和 `D:\Project\QT\Opencv_operatorVideo\third_party\opencv\build`。换机器时改这两个路径。样图在仓库的 `samples/`，编译用不到；从 `client\build\Release` 启动时，选图对话框会向上找到这一层。
 
 ```bat
 cmake -S client -B client\build -G "Visual Studio 17 2022" -A x64
@@ -94,16 +96,18 @@ cmake --build client\build --config Release
 
 3. Linux 上执行 `./client/build/lpr_client`，或在 Windows 上双击 `lpr_client.exe`。地址栏保持默认的 `rtsp://134.175.47.224:8554/live`。点「开始」看画面，点「开始定位」才画车牌框。
 
+没有开发板时，也可以先打开上位机，点「选择图片」，选 `samples/demo_synthetic.bmp`。左侧应出现一个红框，右侧出现车牌小图和「检测到车牌」。这一步不经过云服务器，用来确认当前这套阈值还在。
+
 没有装上位机的电脑可以用 VLC，并且要走 TCP：`vlc --rtsp-tcp rtsp://134.175.47.224:8554/live`。这个地址没有账号密码，知道 URL 的人都能看。
 
 ## 上位机窗口
 
 - 「开始 / 停止」：连接或断开 RTSP。
 - 「开始定位 / 停止定位」：在拉流之后，大约每 200 毫秒拿最新一帧找车牌。画面仍按视频帧率刷新。
-- 「选择图片」：不拉流时，用一张本地图片做定位。样图在 `License Plate Detector/images/`。
+- 「选择图片」：不拉流时，用一张本地图片做定位。样图在 `samples/`。
 - 「查看边缘与掩码」：看这次定位的中间图，用来对照算法，不是给最终用户看的。
 - 右侧：有没有找到车牌、裁出来的车牌、宽高比、得分、倾斜角。红框画在左侧画面上。
 
 ## 进一步看
 
-系统设计、线程和算法边界见 [docs/架构设计.md](docs/架构设计.md)。公网地址、带宽、延迟和 UDP 见 [docs/联调说明.md](docs/联调说明.md)。每次上电后把开发板连上手机热点见 [docs/开发板连接手机热点.md](docs/开发板连接手机热点.md)。虚拟机那次联调的步骤和报错见 [docs/开发流程与排错.md](docs/开发流程与排错.md)。算法阈值和原理见 `License Plate Detector/README.md` 和 `License Plate Detector/docs/项目原理说明.md`。
+系统设计、线程和算法在整条链路里的位置见 [docs/架构设计.md](docs/架构设计.md)。四条找牌路径、阈值和样图结果见 [docs/定位算法.md](docs/定位算法.md)。公网地址、带宽、延迟和 UDP 见 [docs/联调说明.md](docs/联调说明.md)。每次上电后把开发板连上手机热点见 [docs/开发板连接手机热点.md](docs/开发板连接手机热点.md)。虚拟机那次联调的步骤和报错见 [docs/开发流程与排错.md](docs/开发流程与排错.md)。

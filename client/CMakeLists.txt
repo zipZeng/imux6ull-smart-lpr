@@ -16,7 +16,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 if(WIN32)
-    # 与 License Plate Detector 同一套本机路径。换机器时改这两个缓存变量。
+    # 这台 Windows 上的 Qt 和 OpenCV。换机器时改这两个缓存变量。
     set(QT_ROOT "F:/software/Qt/6/6.9.3/msvc2022_64" CACHE PATH "Qt 6 MSVC 2022 64-bit 安装目录")
     list(PREPEND CMAKE_PREFIX_PATH "${QT_ROOT}")
     set(OpenCV_DIR "D:/Project/QT/Opencv_operatorVideo/third_party/opencv/build" CACHE PATH "OpenCVConfig.cmake 所在目录")
