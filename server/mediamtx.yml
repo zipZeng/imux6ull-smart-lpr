@@ -1,0 +1,16 @@
+# MediaMTX 最简配置：只提供一路 RTSP，传输只用 TCP。
+# 启动: mediamtx mediamtx.yml
+# 开发板推流、Ubuntu 拉流都用: rtsp://<本机IP>:8554/live
+#
+# 本机联调把地址里的 IP 写成 127.0.0.1。
+# 公网或局域网把 IP 换成服务器地址，并放行 TCP 8554。
+# 试 UDP 时把下一行改成 rtspTransports: [udp, tcp]，板上再设 RTSP_TRANSPORT=udp。
+
+logLevel: info
+
+rtsp: true
+rtspAddress: :8554
+rtspTransports: [tcp]
+
+paths:
+  live:

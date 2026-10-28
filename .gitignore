@@ -1,0 +1,6 @@
+# MediaMTX 的程序和压缩包从发布页下载，不放进仓库。
+/mediamtx
+/mediamtx_*.tar.gz
+
+# Linux 上的编译目录，里面是本机的 CMake 缓存。
+client/build/

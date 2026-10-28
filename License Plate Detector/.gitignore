@@ -1,0 +1,12 @@
+bin/
+obj/
+output/
+build/
+.vs/
+.vscode/
+.continue/
+*.user
+*.suo
+*.pdb
+*.ilk
+*.obj
